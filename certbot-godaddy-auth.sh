@@ -14,12 +14,21 @@ DNS_REC_DATA="$CERTBOT_VALIDATION"
 
 echo Creating ${DNS_REC_TYPE} record ${DNS_REC_NAME}.${CERTBOT_DOMAIN} for certificate renewal with value ${DNS_REC_DATA}
 
+DOTS=${CERTBOT_DOMAIN//[^.]}
+if [[ ${#DOTS} == 2 ]]; then
+	REALDOMAIN=${CERTBOT_DOMAIN#*\.}
+	PREFIX=.${CERTBOT_DOMAIN%%\.*}
+else
+	REALDOMAIN=${CERTBOT_DOMAIN}
+	PREFIX=""
+fi
+
 curl    -i \
         -X PATCH \
-        "${GODADDY_URL}/v1/domains/${CERTBOT_DOMAIN}/records" \
+        "${GODADDY_URL}/v1/domains/${REALDOMAIN}/records" \
         -H "accept: application/json" \
         -H "Content-Type: application/json" \
         -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" \
-        -d "[{\"data\": \"${DNS_REC_DATA}\", \"name\": \"${DNS_REC_NAME}\", \"type\": \"${DNS_REC_TYPE}\", \"ttl\": 600}]"
+        -d "[{\"data\": \"${DNS_REC_DATA}\", \"name\": \"${DNS_REC_NAME}${PREFIX}\", \"type\": \"${DNS_REC_TYPE}\", \"ttl\": 600}]"
 
 sleep 30s
